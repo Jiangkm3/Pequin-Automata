@@ -1,5 +1,5 @@
 import sys, math, os, time
-DEFAULT_TIMEOUT = 100
+DEFAULT_TIMEOUT = -1
 
 def help_message():
     print("Format:")
@@ -16,13 +16,14 @@ def help_message():
     print("      7: Sum of Powers")
     print("      8: 2D Convex Hull")
     print("      9: MSC")
-    print("Valid <timeout>: a positive number (default = " + str(DEFAULT_TIMEOUT) + " seconds)")
+    print("Valid <timeout>: a positive number (default = generate the data used to produce the graph + 240 seconds timeout)")
 
 def pequin_test(name, new_code, prefix, to):
     global rec_file
     new_file = open("apps/" + name + ".c", "w")
     new_file.write(new_code)
     new_file.close()
+    to = 240 if to == -1 else to
     output = os.popen("timeout " + str(to) + " bash test.sh " + name + " 2> log | grep --color=never 'NUMBER' | sed 's/\:/\ =/g'") 
     outr = output.read()
     print(prefix + outr),
@@ -48,7 +49,7 @@ if not param in ["--all", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
     help_message()
     quit()
 
-to = DEFAULT_TIMEOUT
+to = -1
 if len(sys.argv) == 3:
     if sys.argv[2].isdigit() and int(sys.argv[2]) > 0:
         to = int(sys.argv[2])
@@ -61,7 +62,10 @@ rec_file = open("result", "w")
 
 # --
 # 0 - Find Min
+# Last test case for default is N = 5120
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "0"]:
+    DEFAULT_LAST_N = 5120
     print("\n--\nTesting Benchmark 0: Find Min")
     rec_file.write("Benchmark 0\n")
 
@@ -73,8 +77,10 @@ if param in ["--all", "0"]:
     to_switch = False
     n = 10
     while not to_switch:
-        new_code = "#define MAX_N " + str(n) + sk_code
-        to_switch = pequin_test("find_min_ti", new_code, "N = " + str(n) + ": ", to)
+        new_code = "#define MAX_N " + str(n) + "\n" + sk_code
+        to_switch = pequin_test("find_min_ti", new_code, "N = " + str(n) + ": ", 240 if to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_S: (N = length of array)")
@@ -86,7 +92,9 @@ if param in ["--all", "0"]:
     n = 10
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
-        to_switch = pequin_test("find_min_ts", new_code, "N = " + str(n) + ": ", to)
+        to_switch = pequin_test("find_min_ts", new_code, "N = " + str(n) + ": ", 240 if to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_E: (N = length of array)")
@@ -98,13 +106,19 @@ if param in ["--all", "0"]:
     n = 10
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
-        to_switch = pequin_test("find_min_te", new_code, "N = " + str(n) + ": ", to)
+        to_switch = pequin_test("find_min_te", new_code, "N = " + str(n) + ": ", 240 if to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
 # --
 # 1 - Merging
-# Testing this example linearly as per request from Thomas
+# Testing this example linearly
+# Last test case for default is N = 10, L = 14
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "1"]:
+    DEFAULT_LAST_N = 10
+    DEFAULT_LAST_L = 14
     print("\n--\nTesting Benchmark 1: Merging")
     rec_file.write("Benchmark 1\n")
 
@@ -119,16 +133,11 @@ if param in ["--all", "1"]:
         to_success = 0
         to_switch = False
         l = 2
-        # while not to_switch:
-            # new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
-            # to_switch = pequin_test("merging_ti", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
-            # l *= 2
-            # if not to_switch:
-                # to_success += 1
-        # n *= 2
         while not to_switch:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
-            to_switch = pequin_test("merging_ti", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
+            to_switch = pequin_test("merging_ti", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", 240 if to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and l == DEFAULT_LAST_L
             l += 2
     max_l = l
 
@@ -143,16 +152,11 @@ if param in ["--all", "1"]:
         to_success = 0
         to_switch = False
         l = 2
-        # while not to_switch:
-            # new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
-            # to_switch = pequin_test("merging_ts", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
-            # l *= 2
-            # if not to_switch:
-                # to_success += 1
-        # n *= 2
         while not to_switch and l < max_l:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
             to_switch = pequin_test("merging_ts", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and l == DEFAULT_LAST_L
             l += 2
 
     print("\nT_E: (N = length of the longest array, L = number of arrays)")
@@ -166,21 +170,20 @@ if param in ["--all", "1"]:
         to_success = 0
         to_switch = False
         l = 2
-        # while not to_switch:
-            # new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
-            # to_switch = pequin_test("merging_ti", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
-            # l *= 2
-            # if not to_switch:
-                # to_success += 1
-        # n *= 2
         while not to_switch and l < max_l:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
             to_switch = pequin_test("merging_te", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and l == DEFAULT_LAST_L
             l += 2
 
 # --
 # 2 - Binary Search
+# Last test case for default is N = 5120
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "2"]:
+    DEFAULT_LAST_N = 5120
+
     print("\n--\nTesting Benchmark 2: Binary Search")
     rec_file.write("Benchmark 2\n")
 
@@ -195,6 +198,8 @@ if param in ["--all", "2"]:
         l = int(math.ceil(math.log(n, 2)))
         new_code = "#define MAX_N " + str(n) + "\n#define MAX_LOG " + str(l) + "\n" + sk_code
         to_switch = pequin_test("binary_search_ti", new_code, "N = " + str(n) + ", LOG_N = " + str(l) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_S: (N = length of array)")
@@ -207,6 +212,8 @@ if param in ["--all", "2"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("binary_search_ts", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_E: (N = length of array)")
@@ -219,6 +226,8 @@ if param in ["--all", "2"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("binary_search_te", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nFor the following 2 examples, the timeout limit is set to 10 seconds due to their sub-linear complexity.")
@@ -252,7 +261,12 @@ if param in ["--all", "2"]:
 
 # --
 # 3 - KMP Search
+# Last test case for default is N = 320, M = 128
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "3"]:
+    DEFAULT_LAST_N = 320
+    DEFAULT_LAST_M = 128
+
     print("\n--\nTesting Benchmark 3: KMP Search")
     rec_file.write("Benchmark 3\n")
 
@@ -271,6 +285,8 @@ if param in ["--all", "3"]:
             to_success += 1
             new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_M " + str(m) + "\n" + sk_code
             to_switch = pequin_test("kmp_search_ti", new_code, "N = " + str(n) + ", M = " + str(m) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and m == DEFAULT_LAST_M
             m *= 2
         n *= 2
 
@@ -289,12 +305,18 @@ if param in ["--all", "3"]:
             to_success += 1
             new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_M " + str(m) + "\n" + sk_code
             to_switch = pequin_test("kmp_search_te", new_code, "N = " + str(n) + ", M = " + str(m) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and m == DEFAULT_LAST_M
             m *= 2
         n *= 2
 
 # --
 # 4 - Next Permutation
+# Last test case for default is N = 1280
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "4"]:
+    DEFAULT_LAST_N = 1280
+
     print("\n--\nTesting Benchmark 4: Next Permutation")
     rec_file.write("Benchmark 4\n")
 
@@ -308,6 +330,8 @@ if param in ["--all", "4"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("next_permutation_ti", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_S: (N = length of array)")
@@ -321,6 +345,8 @@ if param in ["--all", "4"]:
         l = math.factorial(n)
         new_code = "#define MAX_N " + str(n) + "\n#define MAX_FAC " + str(l) + "\n" + sk_code
         to_switch = pequin_test("next_permutation_ts", new_code, "N = " + str(n) + ", FAC_N = " + str(l) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_E: (N = length of array)")
@@ -333,11 +359,17 @@ if param in ["--all", "4"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("next_permutation_te", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
 # --
 # 5 - Dutch Flag
+# Last test case for default is N = 320
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "5"]:
+    DEFAULT_LAST_N = 320
+
     print("\n--\nTesting Benchmark 5: Dutch Flag")
     rec_file.write("Benchmark 5\n")
 
@@ -351,6 +383,8 @@ if param in ["--all", "5"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("dutch_flag_ti", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_S: (N = length of array)")
@@ -363,6 +397,8 @@ if param in ["--all", "5"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("dutch_flag_ts", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_E: (N = length of array)")
@@ -375,11 +411,18 @@ if param in ["--all", "5"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("dutch_flag_te", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
 # --
 # 6 - Recurrence Relations Sequence
+# Last test case for default is N = 10, M = 128
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "6"]:
+    DEFAULT_LAST_N = 10
+    DEFAULT_LAST_M = 128
+
     print("\n--\nTesting Benchmark 6: Recurrence Relations Sequence")
     rec_file.write("Benchmark 6\n")
 
@@ -397,6 +440,8 @@ if param in ["--all", "6"]:
         while not to_switch:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define M " + str(m) + "\n" + sk_code
             to_switch = pequin_test("rr_sequence_find_ti", new_code, "N = " + str(n) + ", M = " + str(m) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and m == DEFAULT_LAST_M
             m *= 2
             if not to_switch:
                 to_success += 1
@@ -416,6 +461,8 @@ if param in ["--all", "6"]:
         while not to_switch:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define M " + str(m) + "\n" + sk_code
             to_switch = pequin_test("rr_sequence_find_ts", new_code, "N = " + str(n) + ", M = " + str(m) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and m == DEFAULT_LAST_M
             m *= 2
             if not to_switch:
                 to_success += 1
@@ -435,6 +482,8 @@ if param in ["--all", "6"]:
         while not to_switch:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define M " + str(m) + "\n" + sk_code
             to_switch = pequin_test("rr_sequence_find_te", new_code, "N = " + str(n) + ", M = " + str(m) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or n == DEFAULT_LAST_N and m == DEFAULT_LAST_M
             m *= 2
             if not to_switch:
                 to_success += 1
@@ -442,7 +491,12 @@ if param in ["--all", "6"]:
 
 # --
 # 7 - Sum of Powers
+# Last test case for default is R = 320, K = 4
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "7"]:
+    DEFAULT_LAST_R = 320
+    DEFAULT_LAST_K = 4
+
     print("\n--\nTesting Benchmark 7: Sum of Powers")
     rec_file.write("Benchmark 7\n")
 
@@ -461,6 +515,8 @@ if param in ["--all", "7"]:
             to_success += 1
             new_code = "#define MAX_R " + str(r) + "\n" + "#define MAX_K " + str(k) + "\n" + sk_code
             to_switch = pequin_test("sum_of_powers_ti", new_code, "R = " + str(r) + ", K = " + str(k) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or r == DEFAULT_LAST_R and k == DEFAULT_LAST_K
             k *= 2
         r *= 2
 
@@ -479,6 +535,8 @@ if param in ["--all", "7"]:
             to_success += 1
             new_code = "#define MAX_R " + str(r) + "\n" + "#define MAX_K " + str(k) + "\n" + sk_code
             to_switch = pequin_test("sum_of_powers_ts", new_code, "R = " + str(r) + ", K = " + str(k) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or r == DEFAULT_LAST_R and k == DEFAULT_LAST_K
             k *= 2
         r *= 2
 
@@ -497,12 +555,18 @@ if param in ["--all", "7"]:
             to_success += 1
             new_code = "#define MAX_R " + str(r) + "\n" + "#define MAX_K " + str(k) + "\n" + sk_code
             to_switch = pequin_test("sum_of_powers_te", new_code, "R = " + str(r) + ", K = " + str(k) + ": ", to)
+            if to == -1:
+                to_switch = to_switch or r == DEFAULT_LAST_R and k == DEFAULT_LAST_K
             k *= 2
         r *= 2
 
 # --
 # 8 - 2D Convex Hull
+# Last test case for default is N = 160
+# We also enforce a 240 seconds timeout for default case
 if param in ["--all", "8"]:
+    DEFAULT_LAST_N = 160
+
     print("\n--\nTesting Benchmark 8: 2D Convex Hull")
     rec_file.write("Benchmark 8\n")
 
@@ -516,6 +580,8 @@ if param in ["--all", "8"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("td_convex_hull_ti", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_S: (N = length of array)")
@@ -528,6 +594,8 @@ if param in ["--all", "8"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("td_convex_hull_ts", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_E: (N = length of array)")
@@ -540,6 +608,8 @@ if param in ["--all", "8"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("td_convex_hull_te", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
     print("\nT_E, Annotation Only: (N = length of array)")
@@ -552,11 +622,18 @@ if param in ["--all", "8"]:
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
         to_switch = pequin_test("td_convex_hull_te_ann", new_code, "N = " + str(n) + ": ", to)
+        if to == -1:
+            to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
 # --
 # 9 - MSC
+# Last test case for default is V = 20, E = 400
+# We also enforce a 2000 seconds timeout for default case
 if param in ["--all", "9"]:
+    DEFAULT_LAST_V = 20
+    DEFAULT_LAST_E = 400
+
     print("\n--\nTesting Benchmark 9: MSC")
     rec_file.write("Benchmark 9\n")
     
@@ -574,7 +651,9 @@ if param in ["--all", "9"]:
         while (not to_switch) and e <= v ** 2:
             to_success += 1
             new_code = "#define MAX_V " + str(v) + "\n" + "#define MAX_E " + str(e) + "\n" + sk_code
-            to_switch = pequin_test("msc_ti", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", to)
+            to_switch = pequin_test("msc_ti", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to)
+            if to == -1:
+                to_switch = to_switch or v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
             if e == v ** 2:
                 to_switch = True
             e *= 2
@@ -598,7 +677,9 @@ if param in ["--all", "9"]:
         while (not to_switch) and e <= v ** 2:
             to_success += 1
             new_code = "#define MAX_V " + str(v) + "\n" + "#define MAX_E " + str(e) + "\n" + "#define MAX_EXP " + str(exp) + "\n" + sk_code
-            to_switch = pequin_test("msc_ts", new_code, "V = " + str(v) + ", E = " + str(e) + ", EXP_V = " + str(exp) + ": ", to)
+            to_switch = pequin_test("msc_ts", new_code, "V = " + str(v) + ", E = " + str(e) + ", EXP_V = " + str(exp) + ": ", 2000 if to == -1 else to)
+            if to == -1:
+                to_switch = to_switch or v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
             if e == v ** 2:
                 to_switch = True
             e *= 2
@@ -621,7 +702,9 @@ if param in ["--all", "9"]:
         while (not to_switch) and e <= v ** 2:
             to_success += 1
             new_code = "#define MAX_V " + str(v) + "\n" + "#define MAX_E " + str(e) + "\n" + sk_code
-            to_switch = pequin_test("msc_te", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", to)
+            to_switch = pequin_test("msc_te", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to)
+            if to == -1:
+                to_switch = to_switch or v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
             if e == v ** 2:
                 to_switch = True
             e *= 2
