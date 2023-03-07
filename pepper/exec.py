@@ -78,7 +78,7 @@ if param in ["--all", "0"]:
     n = 10
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
-        to_switch = pequin_test("find_min_ti", new_code, "N = " + str(n) + ": ", 240 if to)
+        to_switch = pequin_test("find_min_ti", new_code, "N = " + str(n) + ": ", to)
         if to == -1:
             to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
@@ -92,7 +92,7 @@ if param in ["--all", "0"]:
     n = 10
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
-        to_switch = pequin_test("find_min_ts", new_code, "N = " + str(n) + ": ", 240 if to)
+        to_switch = pequin_test("find_min_ts", new_code, "N = " + str(n) + ": ", to)
         if to == -1:
             to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
@@ -106,7 +106,7 @@ if param in ["--all", "0"]:
     n = 10
     while not to_switch:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
-        to_switch = pequin_test("find_min_te", new_code, "N = " + str(n) + ": ", 240 if to)
+        to_switch = pequin_test("find_min_te", new_code, "N = " + str(n) + ": ", to)
         if to == -1:
             to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
@@ -135,7 +135,7 @@ if param in ["--all", "1"]:
         l = 2
         while not to_switch:
             new_code = "#define MAX_N " + str(n) + "\n" + "#define MAX_L " + str(l) + "\n" + sk_code
-            to_switch = pequin_test("merging_ti", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", 240 if to)
+            to_switch = pequin_test("merging_ti", new_code, "N = " + str(n) + ", L = " + str(l) + ": ", to)
             if to == -1:
                 to_switch = to_switch or n == DEFAULT_LAST_N and l == DEFAULT_LAST_L
             l += 2
