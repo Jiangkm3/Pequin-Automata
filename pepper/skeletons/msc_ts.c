@@ -91,18 +91,18 @@ void compute(struct In *input, struct Out *output) {
     int ebi1 = input->edgeB[1];
     for (tmp = 0; tmp < MAX_E + MAX_V; tmp++) {
         if (i < NV) {
-                if (j == ebi1) {
+            if (j == ebi1) {
                 i++;
                 cur_msc = output->MSC[i];
                 ebi0 = ebi1;
                 if (i < NV) ebi1 = input->edgeB[i + 1];
-                }
-            else {
+            } else {
                 assert_zero(output->MSC[input->edges[j]] > cur_msc);
                 j++;
             }
         }
     }
     // ----
+    output->MSCnum = MSCnum;
 
 }

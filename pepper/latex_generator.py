@@ -127,7 +127,6 @@ while lineseg[0] != "End":
     else:
         final_te.append(T[2][ti_max_ind] / T[1][ti_max_ind])
 
-
     # Individual Case Data
     if __name__ == '__main__':
 
