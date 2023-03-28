@@ -1,36 +1,37 @@
 #include <stdint.h>
-#define slot(A, i) A[i]
-#define mat_slot(A, n, i, j) A[i * n + j]
+
 struct In {
-  int x;
-  int l;
-  int r;
+    // l inclusive, r exclusive
+    uint32_t l;
+    uint32_t r;
+    uint32_t x;
 };
+
 struct Out {
-  int ind;
+    uint32_t ind;
 };
+
 void compute(struct In *input, struct Out *output) {
-	int A[MAX_N];
-	int ITER1; int ITER2;
-	int x = input->x;
-	int l = input->l;
-	int r = input->r;
-	int r1 = input->r;
-	int l1 = input->l;
-	int ind = -1;
-	int tmp; for(tmp = 0; tmp < MAX_LOG; tmp++){
-		if(ind == -1 && r1 > l1) {
-			int mid = (l1 + r1) >> 1;
-			int amid = slot( A, mid);
-			if(amid > x) {
-				r1 = mid;
-			} else {
-				l1 = mid + 1;
-			}
-			if(amid == x) {
-				ind = mid;
-			}
-		}
-	}
-	output->ind = ind;
+    uint32_t a[MAX_N];
+    uint32_t l = input->l;
+    uint32_t r = input->r;
+    uint32_t x = input->x;
+    uint32_t found = 0;
+    uint32_t amid, tmp;
+    for (tmp = 0; tmp < MAX_LOG; tmp++) {
+        if (r > l) {
+            uint32_t mid = l + (r - l) << 1;
+            amid = a[mid];
+            if (amid > x)
+                r = mid;
+            else
+                l = mid + 1;
+            if (amid == x) {
+                output->ind = mid;
+                found = 1;
+                l = r;
+            }
+        }
+    }
+    if (found == 0) output->ind = -1;
 }

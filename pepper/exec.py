@@ -16,7 +16,8 @@ def help_message():
     print("      7: Sum of Powers")
     print("      8: 2D Convex Hull")
     print("      9: MSC")
-    print("Valid <timeout>: a positive number (default = generate the data used to produce the graph + 240 seconds timeout)")
+    print("     10: MSC")
+    print("Valid <timeout>: a positive number (none = generate the data used to produce the graph + 240 seconds timeout)")
 
 def pequin_test(name, new_code, prefix, to):
     global rec_file
@@ -45,7 +46,7 @@ if not len(sys.argv) in [2, 3]:
     help_message()
     quit()
 param = sys.argv[1]
-if not param in ["--all", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+if not param in ["--all", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
     help_message()
     quit()
 
@@ -242,7 +243,7 @@ if param in ["--all", "2"]:
             to_switch = to_switch or n == DEFAULT_LAST_N
         n *= 2
 
-    print("\nFor the following 2 examples, the timeout limit is set to 10 seconds due to their sub-linear complexity.")
+    print("\nFor the following 2 examples, set limit to N = 160.")
     print("T_I, without RAM Initialization: (N = length of array)")
     rec_file.write("T_IA\n")
     sk_file = open(r"skeletons/binary_search_ti_no_init.c", "r")
@@ -250,10 +251,10 @@ if param in ["--all", "2"]:
     sk_file.close()
     to_switch = False
     n = 10
-    while not to_switch:
+    while not to_switch and n <= 160:
         l = int(math.ceil(math.log(n, 2)))
         new_code = "#define MAX_N " + str(n) + "\n#define MAX_LOG " + str(l) + "\n" + sk_code
-        to_switch = pequin_test("binary_search_ti_no_init", new_code, "N = " + str(n) + ", LOG_N = " + str(l) + ": ", 10)
+        to_switch = pequin_test("binary_search_ti_no_init", new_code, "N = " + str(n) + ", LOG_N = " + str(l) + ": ", to)
         n *= 2
 
     n_term = n
@@ -268,7 +269,7 @@ if param in ["--all", "2"]:
     # Execute it at most 4 times to show it is constant
     while not to_switch and n < n_term:
         new_code = "#define MAX_N " + str(n) + "\n" + sk_code
-        to_switch = pequin_test("binary_search_te_no_init", new_code, "N = " + str(n) + ": ", 10)
+        to_switch = pequin_test("binary_search_te_no_init", new_code, "N = " + str(n) + ": ", to)
         n *= 2
 
 # --
@@ -716,6 +717,9 @@ if param in ["--all", "9"]:
                 to_success += 1
         v *= 2
         exp = 2 ** v
+        # Pequin cannot handle 2^20 iterations, so we timeout by default
+        if v == 20:
+            short_circuit = True
 
     print("\nT_E: (V = number of nodes, E = number of edges)")
     rec_file.write("T_B\n")
@@ -742,6 +746,97 @@ if param in ["--all", "9"]:
             if not to_switch:
                 to_success += 1
         v *= 2
+
+# --
+# 10 - MST
+# Last test case for default is V = 15, E = 30
+# We also enforce a 2000 seconds timeout for default case
+if param in ["--all", "10"]:
+    DEFAULT_LAST_V = 15
+    DEFAULT_LAST_E = 30
+
+    print("\n--\nTesting Benchmark 10: MST")
+    rec_file.write("Benchmark 10\n")
+    
+    print("\nT_I: (V = number of nodes, E = number of edges)")
+    rec_file.write("T_I\n")
+    sk_file = open(r"skeletons/mst_ti.c", "r")
+    sk_code = sk_file.read()
+    sk_file.close()
+    v = 5
+    to_success = -1
+    short_circuit = False
+    while to_success != 0 and not short_circuit:
+        to_success = 0
+        to_switch = False
+        e = 10
+        while (not to_switch) and e <= DEFAULT_LAST_E and not short_circuit:
+            l = int(math.ceil(math.log(v, 2)))
+            new_code = f"#define MAX_VERTICES {v}\n#define INV_ACKER_EDGES 3\n#define MAX_EDGES {e}\n#define LOG_VERTICES {l}\n" + sk_code
+            to_switch = pequin_test("mst_ti", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to)
+            if to == -1:
+                short_circuit = v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
+            to_switch = e == DEFAULT_LAST_E
+            e += 10
+            if not to_switch:
+                to_success += 1
+        v += 5
+    max_v = v
+
+    """
+    print("\nT_S: (V = number of nodes, E = number of edges)")
+    rec_file.write("T_S\n")
+    sk_file = open(r"skeletons/mst_ts.c", "r")
+    sk_code = sk_file.read()
+    sk_file.close()
+    v = 5
+    exp = 2 ** v
+    to_success = -1
+    short_circuit = False
+    while to_success != 0 and not short_circuit:
+        to_success = 0
+        to_switch = False
+        e = 10
+        while (not to_switch) and e <= DEFAULT_LAST_E and not short_circuit:
+            l = int(math.ceil(math.log(v, 2)))
+            new_code = f"#define MAX_VERTICES {v}\n#define INV_ACKER_EDGES 3\n#define MAX_EDGES {e}\n#define LOG_VERTICES {l}\n" + sk_code
+            to_switch = pequin_test("mst_ts", new_code, "V = " + str(v) + ", E = " + str(e) + ", EXP_V = " + str(exp) + ": ", 2000 if to == -1 else to)
+            if to == -1:
+                short_circuit = v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
+            to_switch = e == DEFAULT_LAST_E
+            e += 10
+            if not to_switch:
+                to_success += 1
+        v += 5
+        exp = 2 ** v
+        # Pequin cannot handle 2^20 iterations, so we timeout by default
+        if v == DEFAULT_LAST_V:
+            short_circuit = True
+    """
+
+    print("\nT_E: (V = number of nodes, E = number of edges)")
+    rec_file.write("T_B\n")
+    sk_file = open(r"skeletons/mst_te.c", "r")
+    sk_code = sk_file.read()
+    sk_file.close()
+    v = 5
+    to_success = -1
+    short_circuit = False
+    while to_success != 0 and v < max_v and not short_circuit:
+        to_success = 0
+        to_switch = False
+        e = 10
+        while (not to_switch) and e <= DEFAULT_LAST_E and not short_circuit:
+            l = int(math.ceil(math.log(v, 2)))
+            new_code = f"#define MAX_VERTICES {v}\n#define INV_ACKER_EDGES 3\n#define MAX_EDGES {e}\n#define LOG_VERTICES {l}\n" + sk_code
+            to_switch = pequin_test("mst_te", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to)
+            if to == -1:
+                short_circuit = v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
+            to_switch = e == DEFAULT_LAST_E
+            e += 10
+            if not to_switch:
+                to_success += 1
+        v += 5
 
 rec_file.write("End\n")
 rec_file.close()

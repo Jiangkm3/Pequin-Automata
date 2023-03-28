@@ -1,43 +1,47 @@
 #include <stdint.h>
-#define slot(A, i) A[i]
-#define mat_slot(A, n, i, j) A[i * n + j]
+
 struct In {
-  int x[1];
-  int l[1];
-  int r[1];
+    // l inclusive, r exclusive
+    uint32_t l;
+    uint32_t r;
+    uint32_t x;
+    // index of the element s.t. a[ind] = x;
+    // if no such element exists, then ind = -1
+    uint32_t ind;
+    // sup is provided if ind == -1
+    // a[sup] < x && a[sup + 1] > x
+    // if x < a[l], sup = l - 1
+    // if x > a[r - 1], sup = r - 1
+    uint32_t sup;
 };
+
 struct Out {
-  int ind;
+    uint32_t ind;
 };
-typedef struct ghost_s {
-	int values[1 + 1];
-} ghost_t;
+
 void compute(struct In *input, struct Out *output) {
-  	int A[MAX_N];
-	int ITER1; int ITER2;
-	int *public_info[4] = {A, input->x, input->l, input->r};
-	ghost_t ghost[1];
-	int len[4] = {MAX_N, 1, 1, 1};
-	exo_compute(public_info, len, ghost, 1);
-	int sup = ghost[0].values[0];
-	int ind = ghost[0].values[0 + 1];
-	int x = input->x[0];
-	int l = input->l[0];
-	int r = input->r[0];
-	if(l == r || x < slot( A, l) || slot( A, r - 1) < x) {
-		assert_zero(ind != -1);
-	} else {
-		if(ind == -1) {
-			assert_zero(sup < l);
-			assert_zero(sup >= r - 1);
-			int tmp1 = slot( A, sup);
-			assert_zero(tmp1 >= x);
-			int tmp2 = slot( A, sup + 1);
-			assert_zero(x >= tmp2);
-		} else {
-			assert_zero(ind < l);
-			assert_zero(ind >= r);
-			assert_zero(x != slot( A, ind));
-		}
-	}
+    uint32_t a[MAX_N];
+    uint32_t l = input->l;
+    uint32_t r = input->r;
+    uint32_t x = input->x;
+    uint32_t ind = input->ind;
+    uint32_t sup = input->sup;
+    
+    uint32_t al = a[l];
+    uint32_t ar = a[r - 1];
+
+    if (x < al || x > ar) assert_zero(ind + 1);
+    else if (ind == -1) {
+        assert_zero(sup < l);
+        assert_zero(sup >= r - 1);
+        uint32_t tmp1 = a[sup];
+        uint32_t tmp2 = a[sup + 1];
+        assert_zero(tmp1 >= x);
+        assert_zero(x >= tmp2);                
+    } else {
+        assert_zero(ind < l);
+        assert_zero(ind >= r);
+        assert_zero(a[ind] - x);
+    }
+    output->ind = ind;
 }
