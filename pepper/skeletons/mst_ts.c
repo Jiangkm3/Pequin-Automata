@@ -50,7 +50,7 @@ void compute(struct In * input, struct Out * output) {
 						// we need to check that this edge connects to the previous one
 						int eu = input->edges[3 * q]; // alias edge info
 						int ev = input->edges[3 * q + 1]; // alias edge info
-						if (edge_dir_witness[MAX_VERTICES * i + j]) { int tmp = eu; eu = ev; ev = tmp; } // havoc conditionally swap eu and ev
+						if (input->edge_dir_witness[MAX_VERTICES * i + j]) { int tmp = eu; eu = ev; ev = tmp; } // havoc conditionally swap eu and ev
 						if (eu != vr) { asst++; } // current u is previous v
 						vr = ev; // set next v to current v
 						if (u == vr) { d = 1; } // if the current v is the original u then we have completed a cycle

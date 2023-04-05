@@ -19,7 +19,7 @@ def help_message():
     print("     10: MSC")
     print("Valid <timeout>: a positive number (none = generate the data used to produce the graph + 240 seconds timeout)")
 
-def pequin_test(name, new_code, prefix, to):
+def pequin_test(name, new_code, prefix, to, suffix = ""):
     global rec_file
     new_file = open("apps/" + name + ".c", "w")
     new_file.write(new_code)
@@ -27,11 +27,12 @@ def pequin_test(name, new_code, prefix, to):
     to = 300 if to == -1 else to
     output = os.popen("timeout " + str(to) + " bash test.sh " + name + " 2> log | grep --color=never 'NUMBER' | sed 's/\:/\ =/g'") 
     outr = output.read()
-    print(prefix + outr),
+    print(prefix + outr[:-1], end = ""),
     if outr == "":
         print("Timeout after " + str(to) + " seconds.")
         return True
     else:
+        print(suffix)
         rec_file.write(prefix + outr[25:])
     return False
 
@@ -772,18 +773,19 @@ if param in ["--all", "10"]:
         e = 10
         while (not to_switch) and e <= DEFAULT_LAST_E and not short_circuit:
             l = int(math.ceil(math.log(v, 2)))
+            extra_cons = 22 * (e * 3 * int(math.ceil(math.log(e * 3, 2))) - e * 3 + 1)
+            extra_cons += 7 * (e * int(math.ceil(math.log(e, 2))) - e + 1)
             new_code = f"#define MAX_VERTICES {v}\n#define INV_ACKER_EDGES 3\n#define MAX_EDGES {e}\n#define LOG_VERTICES {l}\n" + sk_code
-            to_switch = pequin_test("mst_ti", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to)
+            to_switch = pequin_test("mst_ti", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to, " + " + str(extra_cons))
             if to == -1:
                 short_circuit = v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
-            to_switch = e == DEFAULT_LAST_E
+            to_switch = to_switch or e == DEFAULT_LAST_E
             e += 10
             if not to_switch:
                 to_success += 1
         v += 5
     max_v = v
 
-    """
     print("\nT_S: (V = number of nodes, E = number of edges)")
     rec_file.write("T_S\n")
     sk_file = open(r"skeletons/mst_ts.c", "r")
@@ -793,7 +795,7 @@ if param in ["--all", "10"]:
     exp = 2 ** v
     to_success = -1
     short_circuit = False
-    while to_success != 0 and not short_circuit:
+    while to_success != 0 and v < max_v and not short_circuit:
         to_success = 0
         to_switch = False
         e = 10
@@ -803,16 +805,12 @@ if param in ["--all", "10"]:
             to_switch = pequin_test("mst_ts", new_code, "V = " + str(v) + ", E = " + str(e) + ", EXP_V = " + str(exp) + ": ", 2000 if to == -1 else to)
             if to == -1:
                 short_circuit = v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
-            to_switch = e == DEFAULT_LAST_E
+            to_switch = to_switch or e == DEFAULT_LAST_E
             e += 10
             if not to_switch:
                 to_success += 1
         v += 5
         exp = 2 ** v
-        # Pequin cannot handle 2^20 iterations, so we timeout by default
-        if v == DEFAULT_LAST_V:
-            short_circuit = True
-    """
 
     print("\nT_E: (V = number of nodes, E = number of edges)")
     rec_file.write("T_B\n")
@@ -828,11 +826,13 @@ if param in ["--all", "10"]:
         e = 10
         while (not to_switch) and e <= DEFAULT_LAST_E and not short_circuit:
             l = int(math.ceil(math.log(v, 2)))
+            extra_cons = 22 * (e * 3 * int(math.ceil(math.log(e * 3, 2))) - e * 3 + 1)
+            extra_cons += 7 * (e - v + 1 + e * int(math.ceil(math.log(v - 1, 4))))
             new_code = f"#define MAX_VERTICES {v}\n#define INV_ACKER_EDGES 3\n#define MAX_EDGES {e}\n#define LOG_VERTICES {l}\n" + sk_code
-            to_switch = pequin_test("mst_te", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to)
+            to_switch = pequin_test("mst_te", new_code, "V = " + str(v) + ", E = " + str(e) + ": ", 2000 if to == -1 else to, " + " + str(extra_cons))
             if to == -1:
                 short_circuit = v == DEFAULT_LAST_V and e == DEFAULT_LAST_E
-            to_switch = e == DEFAULT_LAST_E
+            to_switch = to_switch or e == DEFAULT_LAST_E
             e += 10
             if not to_switch:
                 to_success += 1
